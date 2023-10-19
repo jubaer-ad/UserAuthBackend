@@ -14,7 +14,20 @@ builder.Services.AddDbContext<DataContext>();
 builder.Services.AddTransient<IUserServices, UserServices>();
 builder.Services.AddTransient<IUserRepositories, UserRepositories>();
 
+var theOrigins = "_theOrigins";
+ConfigurationManager configuration = builder.Configuration;
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(theOrigins, policy =>
+    {
+        var origins = configuration.GetSection("AllowedOrigins").Value.ToString().Split(";");
+        policy.WithOrigins(origins).AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+    });
+});
+
 var app = builder.Build();
+app.UseCors(theOrigins);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
