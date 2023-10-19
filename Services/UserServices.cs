@@ -24,7 +24,7 @@ namespace backend.Services
             }
         }
 
-        public async Task<int> Register(UserVM model)
+        public async Task<UserRsp> Register(UserVM model)
         {
 
             try

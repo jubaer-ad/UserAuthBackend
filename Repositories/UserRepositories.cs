@@ -25,20 +25,29 @@ namespace backend.Repositories
             }
         }
 
-        public Task<int> Register(User user)
+        public Task<UserRsp> Register(User user)
         {
 			try
 			{
                 var res = _dbContext.Set<User>().Any(x => x.Email == user.Email);
                 if (res)
                 {
-                    return Task.FromResult(2);
+                    return Task.FromResult(new UserRsp());
                 }
 
 
                 _dbContext.Set<User>().Add(user);
                 _dbContext.SaveChanges();
-                return Task.FromResult(1);
+
+                var created = _dbContext.Set<User>().FirstOrDefault(x => x.Email == user.Email);
+
+
+                return Task.FromResult(new UserRsp()
+                {
+                    MobileNumber = user.MobileNumber,
+                    Email = user.Email,
+                    Name = user.Name,
+                });
 
             }
 			catch (Exception)

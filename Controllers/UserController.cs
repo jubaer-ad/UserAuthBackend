@@ -23,20 +23,51 @@ namespace backend.Controllers
         {
             try
             {
-                var res = await _userServices.Register(model);
-                if (res == 1)
+                APIRsp aPIRsp = new();
+                var user = await _userServices.Register(model);
+                if (user is not null && user.Name is not null)
                 {
-                    return Ok("User Created");
+                    aPIRsp = new APIRsp()
+                    {
+                        IsSuccess = true,
+                        Message = "User Created",
+                        StatusCode = 201,
+                        Data = new UserRsp()
+                        {
+                            Name = user.Name,
+                            Email = user.Email,
+                            MobileNumber = user.MobileNumber,
+                        }
+                    };
+                    return Ok(aPIRsp);
                 }
-                if (res == 2)
+                if (!(user is not null && user.Name is not null))
                 {
-                    return BadRequest("User already exists");
+                    aPIRsp = new APIRsp()
+                    {
+                        IsSuccess = false,
+                        Message = "User already exists",
+                        StatusCode = 403
+                    };
+                    return Ok(aPIRsp);
                 }
-                return BadRequest("Something went wrong");
+                aPIRsp = new APIRsp()
+                {
+                    IsSuccess = false,
+                    Message = "Something went wrong",
+                    StatusCode = 400
+                };
+                return Ok(aPIRsp);
             }
             catch (Exception ex)
             {
-                throw;
+                var aPIRsp = new APIRsp()
+                {
+                    IsSuccess = false,
+                    Message = ex.Message,
+                    StatusCode = 400
+                };
+                return Ok(aPIRsp);
             }
         }
 
@@ -47,22 +78,53 @@ namespace backend.Controllers
         {
             try
             {
+                APIRsp aPIRsp = new();
                 var user = await _userServices.Login(model);
                 if (user == null)
                 {
-                    return BadRequest("User not found");
+                    aPIRsp = new APIRsp()
+                    {
+                        IsSuccess = false,
+                        Message = "User not found",
+                        StatusCode = 404,
+                    };
+                    return Ok(aPIRsp);
                 }
 
                 var res = Helper.Helper.VerifyHash(model.Password, user.HashedPassword, user.HashedSalt);
                 if (!res)
                 {
-                    return BadRequest("Wrong Password");
+                    aPIRsp = new APIRsp()
+                    {
+                        IsSuccess = false,
+                        Message = "Wrong Password",
+                        StatusCode = 401,
+                    };
+                    return Ok(aPIRsp);
                 }
-                return Ok("Login Success");
+                aPIRsp = new APIRsp()
+                {
+                    IsSuccess = true,
+                    Message = "Login Success",
+                    StatusCode = 200,
+                    Data = new UserRsp()
+                    {
+                        Name = user.Name,
+                        Email = user.Email,
+                        MobileNumber = user.MobileNumber,
+                    }
+                };
+                return Ok(aPIRsp);
             }
             catch (Exception ex)
             {
-                throw;
+                var aPIRsp = new APIRsp()
+                {
+                    IsSuccess = false,
+                    Message = ex.Message,
+                    StatusCode = 400
+                };
+                return Ok(aPIRsp);
             }
         }
     }

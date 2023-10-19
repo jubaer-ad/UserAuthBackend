@@ -4,7 +4,7 @@ namespace backend.Services
 {
     public interface IUserServices
     {
-        public Task<int> Register(UserVM user);
+        public Task<UserRsp> Register(UserVM user);
         public Task<User> Login(LoginReq req);
     }
 }
