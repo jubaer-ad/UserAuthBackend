@@ -4,25 +4,22 @@ using System.Security.Cryptography;
 
 namespace backend.Helper
 {
-    public class Helper: IHelper
+    public class Helper
     {
-        public Helper(IConfiguration configuration)
-        {
-            Configuration = configuration;
-        }
-        public IConfiguration Configuration { get; set; }
 
-        public string GetHashed(string key)
+        public static void CreateHash(string toBeHashed, out byte[] hashed, out byte[] salt)
         {
-            var salt = Configuration.GetSection("Salt").Value;
-            var saltBytes = Convert.FromBase64String(salt);
-            var hashed = KeyDerivation.Pbkdf2(
-                                password: key!,
-                                salt: saltBytes,
-                                prf: KeyDerivationPrf.HMACSHA256,
-                                iterationCount: 100000,
-                                numBytesRequested: 256 / 8);
-            return Convert.ToBase64String(hashed);
+            using var hmac = new HMACSHA512();
+            salt = hmac.Key;
+            hashed = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(toBeHashed));
+        }
+
+        public static bool VerifyHash(string toBeVerified, byte[] hashed, byte[] salt)
+        {
+            using var hmac = new HMACSHA512(salt);
+            salt = hmac.Key;
+            var generatedHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(toBeVerified));
+            return generatedHash.SequenceEqual(hashed);
         }
 
 

@@ -1,4 +1,5 @@
 ﻿using backend.Models;
+using backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -9,38 +10,55 @@ namespace backend.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
+        private readonly IUserServices _userServices;
+        public UserController(IUserServices userServices)
+        {
+            _userServices = userServices;
+        }
+
         [AllowAnonymous]
         [HttpPost]
         [Route("register")]
-        public async Task<IActionResult> Register(UserVm model)
+        public async Task<IActionResult> Register(UserVM model)
         {
             try
             {
-                var userData = await _userService.GetAnyUserByEmailAsync(model.Email ?? "");
-                if (userData == null)
+                var res = await _userServices.Register(model);
+                if (res == 1)
                 {
-                    User User = new()
-                    {
-                        Email = model.Email,
-                        Mobile = model.Mobile,
-                        Password = Cryptographer.Encrypt(model.Password),
-                        FullName = model.FullName,
-                        RoleId = model.RoleId,
-                        CreatedBy = 0,
-                        CreatedDate = DateTime.Now,
-                        ModifiedDate = DateTime.Now,
-                        ModifiedBy = 0,
-                        IsActive = true,
-                        IsRemoved = false,
-                        IsLocked = false
-                    };
-                    var data = await _userService.AddAsync(User);
-                    return Ok(data);
+                    return Ok("User Created");
                 }
-                else
+                if (res == 2)
                 {
-                    return Ok(0);
+                    return BadRequest("User already exists");
                 }
+                return BadRequest("Something went wrong");
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+
+        [AllowAnonymous]
+        [HttpPost]
+        [Route("login")]
+        public async Task<IActionResult> Login(LoginReq model)
+        {
+            try
+            {
+                var user = await _userServices.Login(model);
+                if (user == null)
+                {
+                    return BadRequest("User not found");
+                }
+
+                var res = Helper.Helper.VerifyHash(model.Password, user.HashedPassword, user.HashedSalt);
+                if (!res)
+                {
+                    return BadRequest("Wrong Password");
+                }
+                return Ok("Login Success");
             }
             catch (Exception ex)
             {
